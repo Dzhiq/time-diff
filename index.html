@@ -96,6 +96,14 @@ button:hover {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* 新增作者信息样式 */
+.author {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #cccccc; /* 浅灰色，与背景对比且不喧宾夺主 */
+}
+
 </style>
 </head>
 
@@ -121,6 +129,8 @@ button:hover {
             <option value="day">天</option>
         </select>
         <button onclick="startCountdown()">开始倒计时</button>
+	<!-- 新增作者信息显示 -->
+    <p class="author">Author：dzq</p>
     </div>
 
     <!-- 两时间差 -->
@@ -200,7 +210,7 @@ function startCountdown() {
 
         if (diff <= 0) {
             clearInterval(timer);
-            resultDiv.innerText = "🎉 时间已到！";
+            resultDiv.innerText = "🎉 时间已到，冲冲冲！";
             return;
         }
 
