@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>时间差计算器</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.card {
+    background: white;
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+    width: 380px;
+    max-width: 92%;
+    text-align: center;
+    animation: fadeIn 0.6s ease;
+}
+
+h2 {
+    margin: 6px 0 12px;
+}
+
+.now-time {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.25s;
+    font-weight: bold;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+.result {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    min-height: 28px;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 14px;
+}
+
+.tab {
+    flex: 1;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 8px;
+    background: #eee;
+    margin: 2px;
+    font-size: 14px;
+}
+
+.tab.active {
+    background: #667eea;
+    color: white;
+    font-weight: bold;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <div class="now-time" id="nowTime">当前时间：--</div>
+    <h2>⏳ 时间差计算器</h2>
+
+    <!-- 标签 -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchMode('countdown', this)">实时倒计时</div>
+        <div class="tab" onclick="switchMode('diff', this)">两个时间求差</div>
+    </div>
+
+    <!-- 倒计时 -->
+    <div id="countdownMode">
+        <input type="datetime-local" id="targetTime" step="1">
+        <select id="unit1">
+            <option value="second">秒</option>
+            <option value="minute">分钟</option>
+            <option value="hour">小时</option>
+            <option value="day">天</option>
+        </select>
+        <button onclick="startCountdown()">开始倒计时</button>
+    </div>
+
+    <!-- 两时间差 -->
+    <div id="diffMode" style="display:none;">
+        <input type="datetime-local" id="timeA" step="1">
+        <input type="datetime-local" id="timeB" step="1">
+        <select id="unit2">
+            <option value="second">秒</option>
+            <option value="minute">分钟</option>
+            <option value="hour">小时</option>
+            <option value="day">天</option>
+        </select>
+        <button onclick="calculateDiff()">计算时间差</button>
+    </div>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+let timer = null;
+
+/* ===== 实时显示当前时间 ===== */
+function updateNowTime() {
+    const now = new Date();
+    const formatted =
+        now.getFullYear() + "-" +
+        String(now.getMonth()+1).padStart(2,"0") + "-" +
+        String(now.getDate()).padStart(2,"0") + " " +
+        String(now.getHours()).padStart(2,"0") + ":" +
+        String(now.getMinutes()).padStart(2,"0") + ":" +
+        String(now.getSeconds()).padStart(2,"0");
+
+    document.getElementById("nowTime").innerText = "当前时间：" + formatted;
+}
+setInterval(updateNowTime, 1000);
+updateNowTime();
+
+/* ===== 切换模式 ===== */
+function switchMode(mode, el) {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    el.classList.add("active");
+
+    document.getElementById("countdownMode").style.display =
+        mode === "countdown" ? "block" : "none";
+    document.getElementById("diffMode").style.display =
+        mode === "diff" ? "block" : "none";
+
+    clearInterval(timer);
+    document.getElementById("result").innerText = "";
+}
+
+/* ===== 单位换算 ===== */
+function convert(seconds, unit) {
+    if (unit === "second") return [seconds, "秒"];
+    if (unit === "minute") return [seconds/60, "分钟"];
+    if (unit === "hour") return [seconds/3600, "小时"];
+    return [seconds/86400, "天"];
+}
+
+/* ===== 实时倒计时 ===== */
+function startCountdown() {
+    const input = document.getElementById("targetTime").value;
+    const unit = document.getElementById("unit1").value;
+    const resultDiv = document.getElementById("result");
+
+    if (!input) {
+        resultDiv.innerText = "❌ 请选择目标时间";
+        return;
+    }
+
+    const target = new Date(input);
+    clearInterval(timer);
+
+    timer = setInterval(() => {
+        const now = new Date();
+        let diff = (target - now) / 1000;
+
+        if (diff <= 0) {
+            clearInterval(timer);
+            resultDiv.innerText = "🎉 时间已到！";
+            return;
+        }
+
+        const [value, label] = convert(diff, unit);
+        resultDiv.innerText = `剩余：${value.toFixed(2)} ${label}`;
+    }, 1000);
+}
+
+/* ===== 两时间求差 ===== */
+function calculateDiff() {
+    const a = document.getElementById("timeA").value;
+    const b = document.getElementById("timeB").value;
+    const unit = document.getElementById("unit2").value;
+    const resultDiv = document.getElementById("result");
+
+    if (!a || !b) {
+        resultDiv.innerText = "❌ 请选择两个时间";
+        return;
+    }
+
+    const diff = Math.abs(new Date(a) - new Date(b)) / 1000;
+    const [value, label] = convert(diff, unit);
+
+    resultDiv.innerText = `时间差为：${value.toFixed(2)} ${label}`;
+}
+</script>
+
+</body>
+</html>
